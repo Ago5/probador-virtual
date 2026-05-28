@@ -1,8 +1,7 @@
-flask==3.0.3
-flask-cors==4.0.1
-opencv-python==4.10.0.84
-mediapipe==0.10.14
-rembg==2.0.57
-Pillow==10.4.0
-numpy==1.26.4
-gunicorn==22.0.0
+flask
+flask-cors
+opencv-python
+rembg[cpu]
+Pillow
+numpy
+gunicorn
