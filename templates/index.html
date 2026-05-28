@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probador Virtual — Demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f0ede8; margin: 0; padding: 2rem 1rem; color: #1a1a1a; }
+  .demo-wrap { max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  p.sub { color: #777; font-size: 14px; margin-bottom: 1.5rem; }
+  .card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  iframe { width: 100%; height: 680px; border: none; border-radius: 8px; }
+  .code-block { margin-top: 1.5rem; background: #1a1a1a; color: #e5e5e5; border-radius: 10px; padding: 1rem 1.25rem; font-family: monospace; font-size: 13px; line-height: 1.7; overflow-x: auto; }
+  .code-block span.cm { color: #888; }
+  .code-block span.cs { color: #7dd3fc; }
+  .code-block span.cv { color: #86efac; }
+  h2 { font-size: 16px; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+</style>
+</head>
+<body>
+<div class="demo-wrap">
+  <h1>🥿 Probador Virtual — Demo</h1>
+  <p class="sub">Backend corriendo correctamente. Así se ve el widget en tu tienda.</p>
+  
+  <div class="card">
+    <iframe src="/widget"></iframe>
+  </div>
+
+  <h2>Cómo embeber en Tienda Nube</h2>
+  <p style="font-size:14px;color:#555;margin-bottom:8px;">
+    Pegá este código en <strong>Personalización → Editar código del tema → snippets/probador.html</strong>
+    y luego incluilo en la página de producto con <code>{% include 'probador' %}</code>:
+  </p>
+  <div class="code-block">
+    <span class="cm">&lt;!-- Probador Virtual --&gt;</span><br>
+    <span class="cs">&lt;button</span> <span class="cv">onclick</span>=<span>"document.getElementById('pv-modal').style.display='flex'"</span><span class="cs">&gt;</span><br>
+    &nbsp;&nbsp;👟 Probarte este zapato<br>
+    <span class="cs">&lt;/button&gt;</span><br><br>
+    <span class="cs">&lt;div</span> <span class="cv">id</span>=<span>"pv-modal"</span> <span class="cv">style</span>=<span>"display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;"</span><span class="cs">&gt;</span><br>
+    &nbsp;&nbsp;<span class="cs">&lt;div</span> <span class="cv">style</span>=<span>"background:#fff;border-radius:16px;overflow:hidden;width:min(540px,95vw);"</span><span class="cs">&gt;</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cs">&lt;iframe</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cv">src</span>=<span>"https://TU-APP.onrender.com/widget"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cv">width</span>=<span>"100%"</span> <span class="cv">height</span>=<span>"700"</span> <span class="cv">frameborder</span>=<span>"0"</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="cs">&gt;&lt;/iframe&gt;</span><br>
+    &nbsp;&nbsp;<span class="cs">&lt;/div&gt;</span><br>
+    <span class="cs">&lt;/div&gt;</span><br><br>
+    <span class="cs">&lt;script&gt;</span><br>
+    &nbsp;&nbsp;<span class="cm">// Cerrar modal cuando el widget manda señal</span><br>
+    &nbsp;&nbsp;window.addEventListener(<span>"message"</span>, e =&gt; {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;if (e.data === <span>"cerrar-probador"</span>)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;document.getElementById(<span>"pv-modal"</span>).style.display = <span>"none"</span>;<br>
+    &nbsp;&nbsp;});<br>
+    <span class="cs">&lt;/script&gt;</span>
+  </div>
+</div>
+</body>
+</html>

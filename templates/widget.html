@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probador Virtual</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f8f7f5; color: #1a1a1a; }
+  .pv { max-width: 520px; margin: 0 auto; padding: 1.25rem; }
+  .pv-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .pv-header h2 { font-size: 17px; font-weight: 600; }
+  .pv-badge { font-size: 11px; background: #EEE; border-radius: 99px; padding: 3px 9px; color: #555; }
+  .pv-cam-wrap { position: relative; width: 100%; aspect-ratio: 4/3; background: #111; border-radius: 14px; overflow: hidden; }
+  #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  #canvas-overlay { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); }
+  .pv-cam-status { position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: #888; }
+  .pv-cam-status.activo { background: #22c55e; }
+  .pv-nocam { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: #aaa; }
+  .pv-nocam p { font-size: 13px; }
+  .pv-controles { margin-top: 1rem; display: flex; flex-direction: column; gap: 12px; }
+  .pv-label { font-size: 12px; color: #666; font-weight: 500; margin-bottom: 6px; }
+  .pv-zapatos { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .pv-zapato-btn { flex: 0 0 auto; border: 2px solid #ddd; border-radius: 10px; background: #fff; padding: 6px; cursor: pointer; width: 72px; text-align: center; transition: border-color 0.15s; }
+  .pv-zapato-btn:hover { border-color: #aaa; }
+  .pv-zapato-btn.activo { border-color: #111; }
+  .pv-zapato-btn img { width: 56px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
+  .pv-zapato-btn span { font-size: 10px; color: #444; line-height: 1.2; display: block; }
+  .pv-slider-row { display: flex; align-items: center; gap: 10px; }
+  .pv-slider-row input[type=range] { flex: 1; accent-color: #111; }
+  .pv-slider-row span { font-size: 13px; min-width: 34px; text-align: right; color: #333; }
+  .pv-size-row { display: flex; align-items: center; gap: 8px; }
+  .pv-size-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .pv-size-val { font-size: 14px; font-weight: 600; min-width: 40px; text-align: center; }
+  .pv-btn { width: 100%; padding: 11px; border-radius: 10px; border: none; background: #111; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .pv-btn:hover { background: #333; }
+  .pv-btn.secundario { background: #fff; color: #111; border: 1.5px solid #ddd; margin-top: 6px; }
+  .pv-btn.secundario:hover { background: #f3f3f3; }
+  .pv-hint { font-size: 12px; color: #888; text-align: center; }
+</style>
+</head>
+<body>
+<div class="pv">
+  <div class="pv-header">
+    <h2>Probador virtual</h2>
+    <span class="pv-badge" id="estado-badge">Listo</span>
+  </div>
+
+  <div class="pv-cam-wrap">
+    <div class="pv-nocam" id="pantalla-nocam">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <p>Presioná "Activar cámara" para empezar</p>
+    </div>
+    <video id="video" autoplay playsinline style="display:none"></video>
+    <canvas id="canvas-overlay"></canvas>
+    <div class="pv-cam-status" id="status-dot"></div>
+  </div>
+
+  <div class="pv-controles">
+    <div>
+      <p class="pv-label">Modelo de zapato</p>
+      <div class="pv-zapatos" id="lista-zapatos">
+        <p style="font-size:13px;color:#aaa;padding:8px 0">Cargando modelos...</p>
+      </div>
+    </div>
+
+    <div>
+      <p class="pv-label">Tamaño del zapato</p>
+      <div class="pv-size-row">
+        <button class="pv-size-btn" onclick="cambiarTamano(-5)">−</button>
+        <span class="pv-size-val" id="tamano-val">100%</span>
+        <button class="pv-size-btn" onclick="cambiarTamano(5)">+</button>
+      </div>
+    </div>
+
+    <div>
+      <p class="pv-label">Transparencia</p>
+      <div class="pv-slider-row">
+        <input type="range" id="opacidad" min="20" max="100" value="90">
+        <span id="opacidad-val">90%</span>
+      </div>
+    </div>
+
+    <p class="pv-hint">Apuntá la cámara a tus pies y ajustá el tamaño con + y −</p>
+
+    <button class="pv-btn" id="btn-camara" onclick="toggleCamara()">📷 Activar cámara</button>
+    <button class="pv-btn secundario" onclick="window.parent.postMessage('cerrar-probador','*')">Cerrar probador</button>
+  </div>
+</div>
+
+<script>
+const API_URL = window.PROBADOR_API_URL || "http://localhost:5000";
+let stream = null;
+let camaraActiva = false;
+let opacidad = 0.9;
+let tamano = 100;
+let imgZapato = null;
+let animFrame = null;
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas-overlay");
+const ctx = canvas.getContext("2d");
+
+async function cargarZapatos() {
+  try {
+    const res = await fetch(`${API_URL}/zapatos`);
+    const zapatos = await res.json();
+    const contenedor = document.getElementById("lista-zapatos");
+    if (!zapatos.length) {
+      contenedor.innerHTML = '<p style="font-size:13px;color:#aaa">Sin modelos disponibles</p>';
+      return;
+    }
+    contenedor.innerHTML = "";
+    zapatos.forEach((z, i) => {
+      const btn = document.createElement("button");
+      btn.className = "pv-zapato-btn" + (i === 0 ? " activo" : "");
+      btn.innerHTML = `<img src="${API_URL}${z.url}" alt="${z.nombre}"><span>${z.nombre.substring(0,12)}</span>`;
+      btn.onclick = () => seleccionarZapato(btn, `${API_URL}${z.url}`);
+      contenedor.appendChild(btn);
+    });
+    if (zapatos[0]) seleccionarZapato(contenedor.firstChild, `${API_URL}${zapatos[0].url}`);
+  } catch(e) { console.error(e); }
+}
+
+function seleccionarZapato(btn, url) {
+  document.querySelectorAll(".pv-zapato-btn").forEach(b => b.classList.remove("activo"));
+  btn.classList.add("activo");
+  imgZapato = new Image();
+  imgZapato.src = url;
+}
+
+function cambiarTamano(delta) {
+  tamano = Math.max(40, Math.min(200, tamano + delta));
+  document.getElementById("tamano-val").textContent = tamano + "%";
+}
+
+async function toggleCamara() {
+  if (camaraActiva) { detenerCamara(); } else { await iniciarCamara(); }
+}
+
+async function iniciarCamara() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 640, height: 480 } });
+    video.srcObject = stream;
+    video.style.display = "block";
+    document.getElementById("pantalla-nocam").style.display = "none";
+    document.getElementById("btn-camara").textContent = "⏹ Detener cámara";
+    document.getElementById("status-dot").classList.add("activo");
+    document.getElementById("estado-badge").textContent = "Cámara activa";
+    camaraActiva = true;
+    video.addEventListener("loadedmetadata", () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      dibujarLoop();
+    });
+  } catch(e) {
+    document.getElementById("estado-badge").textContent = "Error de cámara";
+  }
+}
+
+function detenerCamara() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  video.style.display = "none";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById("pantalla-nocam").style.display = "flex";
+  document.getElementById("btn-camara").textContent = "📷 Activar cámara";
+  document.getElementById("status-dot").classList.remove("activo");
+  document.getElementById("estado-badge").textContent = "Listo";
+  camaraActiva = false;
+}
+
+function dibujarLoop() {
+  if (!camaraActiva) return;
+  dibujarZapato();
+  animFrame = requestAnimationFrame(dibujarLoop);
+}
+
+function dibujarZapato() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!imgZapato || !imgZapato.complete || !imgZapato.naturalWidth) return;
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const anchoBase = cw * 0.55 * (tamano / 100);
+  const altoBase = anchoBase * 0.45;
+  const x = (cw - anchoBase) / 2;
+  const y = ch - altoBase - ch * 0.05;
+  ctx.globalAlpha = opacidad;
+  ctx.drawImage(imgZapato, x, y, anchoBase, altoBase);
+  ctx.globalAlpha = 1;
+}
+
+document.getElementById("opacidad").addEventListener("input", function() {
+  opacidad = this.value / 100;
+  document.getElementById("opacidad-val").textContent = this.value + "%";
+});
+
+cargarZapatos();
+</script>
+</body>
+</html>
